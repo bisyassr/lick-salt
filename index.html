@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Mineral Lick Market Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Visualization & Content Choices:
+        - Market Growth (Report Sec 2.1): Goal: Show change. Viz: Line Chart (Chart.js). Interaction: Tooltips. Justification: Clearly visualizes growth trends and CAGR. Library: Chart.js.
+        - Market Drivers (Report Sec 2.2): Goal: Inform. Viz: Interactive Cards (HTML/Tailwind). Interaction: Click to expand/show details (JS). Justification: Allows concise overview with option for detail. Method: HTML/JS.
+        - Market Restraints (Report Sec 2.3): Goal: Inform. Viz: Interactive Cards (HTML/Tailwind). Interaction: Click to expand/show details (JS). Justification: Similar to drivers for consistency. Method: HTML/JS.
+        - Product Types (Report Sec 3.1): Goal: Organize/Inform. Viz: Filterable Cards (HTML/Tailwind). Interaction: Buttons to filter types, JS updates displayed cards. Justification: Easy comparison and focused view of product forms. Method: HTML/JS.
+        - Mineral Compositions (Report Sec 3.2): Goal: Inform. Viz: Tabbed content within Product section (HTML/Tailwind). Interaction: JS to switch content based on tab (Core, Trace, Himalayan, Animal-Specific). Justification: Organizes dense info. Method: HTML/JS.
+        - Pricing (Report Sec 3.3): Goal: Compare. Viz: Dynamic Text Display based on product category (HTML/Tailwind). Interaction: Link from product types. Justification: Provides context without a complex table. Method: HTML/JS.
+        - Leading Brands (Report Sec 3.4): Goal: Inform/Organize. Viz: Accordion/Expandable List (HTML/Tailwind). Interaction: JS to toggle visibility of brand details. Justification: Manages long lists effectively. Method: HTML/JS.
+        - Animal Segments Demand (Report Sec 4.1-4.3): Goal: Compare/Inform. Viz: Icon-driven content display (HTML/Tailwind/Unicode Icons). Interaction: JS to show segment-specific info on icon click. Justification: Visually engaging and intuitive. Method: HTML/JS.
+        - Customer Reviews (Report Sec 4.4): Goal: Inform. Viz: Static card displays (HTML/Tailwind). Interaction: None, direct presentation. Justification: Provides qualitative insight. Method: HTML.
+        - Emerging Trends (Report Sec 5.1-5.4): Goal: Inform. Viz: Tabbed content/Accordion (HTML/Tailwind). Interaction: JS to switch content. Justification: Organizes distinct trend information. Method: HTML/JS.
+        - Strategic Recommendations (Report Sec 6): Goal: Inform. Viz: Bulleted List/Cards (HTML/Tailwind). Interaction: None, direct presentation. Justification: Clear and actionable. Method: HTML.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. All visuals are Chart.js (Canvas) or HTML/CSS/Tailwind with Unicode characters for icons. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #fdfbf6; color: #374151; }
+        .tab-button { transition: all 0.3s ease; }
+        .tab-button.active { border-color: #d97706; color: #d97706; background-color: #fff7ed; }
+        .tab-button:not(.active):hover { background-color: #f3f4f6; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .card { background-color: white; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); padding: 1.5rem; margin-bottom: 1rem; }
+        .card h3 { color: #115e59; } /* Muted Teal */
+        .chart-container { position: relative; width: 100%; max-width: 700px; margin-left: auto; margin-right: auto; height: 350px; max-height: 400px; padding: 1rem; background-color: white; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .interactive-card { cursor: pointer; transition: transform 0.2s ease-in-out; border: 1px solid #e5e7eb; }
+        .interactive-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); }
+        .filter-button { background-color: #e0f2f1; color: #00796b; border: 1px solid #00796b; }
+        .filter-button.active { background-color: #00796b; color: white; }
+        .accordion-button { background-color: #f0fdfa; border: 1px solid #ccfbf1; }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .icon-button { font-size: 2rem; transition: color 0.3s ease; }
+        .icon-button:hover, .icon-button.active { color: #d97706; /* Terracotta */ }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-[#0d9488]">Interactive Mineral & Salt Lick Market Analysis</h1>
+            <p class="text-lg text-gray-600 mt-2">Explore key insights from the 2024-2032 market research report for Canada & USA.</p>
+        </header>
+
+        <nav class="mb-8 sticky top-0 z-50 bg-[#fdfbf6] py-2 shadow-sm">
+            <div class="flex flex-wrap justify-center space-x-2 sm:space-x-4">
+                <button class="tab-button active py-2 px-3 sm:px-4 rounded-md text-sm sm:text-base font-medium border-b-2 border-transparent" onclick="showTab('overview')">📊 Overview</button>
+                <button class="tab-button py-2 px-3 sm:px-4 rounded-md text-sm sm:text-base font-medium border-b-2 border-transparent" onclick="showTab('products')">🧱 Products</button>
+                <button class="tab-button py-2 px-3 sm:px-4 rounded-md text-sm sm:text-base font-medium border-b-2 border-transparent" onclick="showTab('competition')">🏆 Competition</button>
+                <button class="tab-button py-2 px-3 sm:px-4 rounded-md text-sm sm:text-base font-medium border-b-2 border-transparent" onclick="showTab('segments')">🐾 Animal Segments</button>
+                <button class="tab-button py-2 px-3 sm:px-4 rounded-md text-sm sm:text-base font-medium border-b-2 border-transparent" onclick="showTab('trends')">📈 Trends</button>
+                <button class="tab-button py-2 px-3 sm:px-4 rounded-md text-sm sm:text-base font-medium border-b-2 border-transparent" onclick="showTab('recommendations')">💡 Recommendations</button>
+            </div>
+        </nav>
+
+        <main>
+            <section id="overview" class="content-section active">
+                <h2 class="text-3xl font-semibold mb-6 text-center text-[#115e59]">Market Overview</h2>
+                <p class="mb-6 text-gray-700 text-center max-w-3xl mx-auto">This section provides a snapshot of the mineral and salt lick market, including its current valuation, projected growth, and the primary factors influencing its trajectory. Understanding these dynamics is crucial for identifying opportunities and navigating potential challenges in this specialized sector.</p>
+                <div class="grid md:grid-cols-3 gap-6 mb-8">
+                    <div class="card text-center">
+                        <h3 class="text-xl font-semibold mb-2">Global Market Value (2023)</h3>
+                        <p class="text-3xl font-bold text-[#d97706]">~$1.8 Billion USD</p>
+                    </div>
+                    <div class="card text-center">
+                        <h3 class="text-xl font-semibold mb-2">Projected Global Market (2031)</h3>
+                        <p class="text-3xl font-bold text-[#d97706]">~$4 Billion USD</p>
+                    </div>
+                    <div class="card text-center">
+                        <h3 class="text-xl font-semibold mb-2">Projected CAGR (2024-2031)</h3>
+                        <p class="text-3xl font-bold text-[#d97706]">~10.41%</p>
+                    </div>
+                </div>
+                <div class="card mb-8">
+                    <h3 class="text-2xl font-semibold mb-4 text-center">Market Growth Projections</h3>
+                     <div class="chart-container">
+                        <canvas id="marketGrowthChart"></canvas>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2 text-center">The animal salt licks market shows a significantly higher growth rate compared to the broader salt market, indicating strong specialized demand in animal nutrition.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="card">
+                        <h3 class="text-2xl font-semibold mb-4">Key Market Drivers 🚀</h3>
+                        <p class="mb-4 text-sm text-gray-600">Click on a driver to see more details.</p>
+                        <div id="marketDrivers" class="space-y-3"></div>
+                    </div>
+                    <div class="card">
+                        <h3 class="text-2xl font-semibold mb-4">Market Restraints & Challenges 🚧</h3>
+                        <p class="mb-4 text-sm text-gray-600">Click on a restraint to see more details.</p>
+                        <div id="marketRestraints" class="space-y-3"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="products" class="content-section">
+                <h2 class="text-3xl font-semibold mb-6 text-center text-[#115e59]">Product Insights</h2>
+                <p class="mb-6 text-gray-700 text-center max-w-3xl mx-auto">Delve into the various types of mineral and salt licks available, their common compositions, and an overview of pricing. This section highlights the diversity of products designed to meet specific animal needs and environmental conditions.</p>
+
+                <div class="card mb-8">
+                    <h3 class="text-2xl font-semibold mb-4">Product Types & Forms</h3>
+                    <div class="flex flex-wrap justify-center gap-2 mb-4" id="productTypeFilters"></div>
+                    <div id="productTypesContainer" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                     <p class="mt-4 text-sm text-gray-600">The variety of forms addresses specific use cases, from weather-resistant tubs for livestock to hangable blocks for pets.</p>
+                </div>
+
+                <div class="card mb-8">
+                    <h3 class="text-2xl font-semibold mb-4">Common Mineral Compositions</h3>
+                    <div class="mb-4 border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-8" aria-label="Tabs" id="compositionTabs">
+                            <button class="composition-tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-target="coreMineralsContent">Core Minerals</button>,
+                            <button class="composition-tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-target="traceMineralsContent">Trace Minerals</button>
+                            <button class="composition-tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-target="himalayanSaltContent">Himalayan Salt</button>
+                            <button class="composition-tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-target="animalSpecificContent">Animal-Specific</button>
+                        </nav>
+                    </div>
+                    <div id="compositionContent">
+                        <div id="coreMineralsContent" class="composition-content-panel active">
+                            <h4 class="text-lg font-semibold mb-2 text-[#d97706]">Core Macro-Elements</h4>
+                            <p class="text-gray-700">Foundationally, licks provide sodium, calcium, magnesium, phosphorus, potassium, and sulfur. Sodium is a primary attractant.</p>
+                        </div>
+                        <div id="traceMineralsContent" class="composition-content-panel" style="display:none;">
+                             <h4 class="text-lg font-semibold mb-2 text-[#d97706]">Essential Trace Minerals</h4>
+                            <p class="text-gray-700">Fortified with copper, iron, manganese, zinc, iodine, selenium, and cobalt, vital for immune support, reproduction, bone health, and metabolism.</p>
+                        </div>
+                        <div id="himalayanSaltContent" class="composition-content-panel" style="display:none;">
+                            <h4 class="text-lg font-semibold mb-2 text-[#d97706]">Himalayan Salt Licks</h4>
+                            <p class="text-gray-700">Marketed as "100% pure and organic," containing up to "84 trace minerals." Valued for natural purity and longevity. Redmond Rock (USA-mined) claims over 60 trace minerals and higher content than some Himalayan imports.</p>
+                        </div>
+                         <div id="animalSpecificContent" class="composition-content-panel" style="display:none;">
+                             <h4 class="text-lg font-semibold mb-2 text-[#d97706]">Animal-Specific Formulations</h4>
+                            <p class="text-gray-700">Tailored to unique nutritional needs of different species (cattle, horses, sheep, pets, wildlife) and life stages, reflecting a trend towards "precision nutrition."</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="text-2xl font-semibold mb-4">Pricing Analysis Overview</h3>
+                    <p class="text-gray-700 mb-2">Prices vary significantly based on size, type (plain vs. Himalayan/fortified), brand, and target animal. Small pet licks can be under $5 CAD, while large livestock tubs can exceed $150 CAD.</p>
+                    <p class="text-gray-700 mb-2"><strong class="text-[#115e59]">Himalayan Salt Licks (on rope/blocks):</strong> Generally $8-$85+ CAD / $9-$60+ USD, depending on weight and pack size.</p>
+                    <p class="text-gray-700 mb-2"><strong class="text-[#115e59]">Livestock Mineral/Salt Blocks (20kg/50lb):</strong> Ranges $10-$110 CAD / $5-$48 USD, varying by mineral content and brand.</p>
+                    <p class="text-gray-700">This indicates price elasticity, with willingness to pay more for specialized or value-added products. Tiered pricing strategies are viable.</p>
+                </div>
+            </section>
+
+            <section id="competition" class="content-section">
+                <h2 class="text-3xl font-semibold mb-6 text-center text-[#115e59]">Competitive Landscape</h2>
+                <p class="mb-6 text-gray-700 text-center max-w-3xl mx-auto">This section explores the key players in the mineral and salt lick market, including leading manufacturers and major distribution channels. The market features established brands alongside regional and niche participants.</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="card">
+                        <h3 class="text-2xl font-semibold mb-4">Leading Brands & Manufacturers</h3>
+                        <p class="mb-2 text-sm text-gray-600">A mix of local and international companies. Some specialize in locally mined salts (e.g., Redmond Minerals in USA), while others focus on imported Himalayan salt or specialized formulations.</p>
+                        <div id="leadingBrandsAccordion" class="space-y-2"></div>
+                    </div>
+                    <div class="card">
+                        <h3 class="text-2xl font-semibold mb-4">Major Retailers & Distribution Channels</h3>
+                        <p class="mb-2 text-sm text-gray-600">Products are available through a diverse range of online and offline channels.</p>
+                        <h4 class="text-lg font-semibold text-[#d97706] mt-4 mb-2">Online Channels:</h4>
+                        <ul class="list-disc list-inside text-gray-700 space-y-1">
+                            <li>E-commerce Marketplaces (Amazon, Walmart, eBay)</li>
+                            <li>Specialty Online Retailers (FarmVet, Petland.ca, Cabelas.ca)</li>
+                            <li>Wholesale Platforms (Faire.com)</li>
+                            <li>Direct-to-Consumer (DTC) via manufacturer websites</li>
+                        </ul>
+                        <h4 class="text-lg font-semibold text-[#d97706] mt-4 mb-2">Offline Channels:</h4>
+                        <ul class="list-disc list-inside text-gray-700 space-y-1">
+                            <li>Agricultural Supply Stores</li>
+                            <li>Animal Health Stores</li>
+                            <li>General Retail/Hypermarkets</li>
+                            <li>Specialty Pet Stores</li>
+                            <li>Farm Co-ops/Feed Mills</li>
+                        </ul>
+                        <p class="mt-3 text-sm text-gray-600">An omnichannel strategy is vital, leveraging broad marketplaces and specialized/DTC channels for targeted engagement.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="segments" class="content-section">
+                <h2 class="text-3xl font-semibold mb-6 text-center text-[#115e59]">Demand by Animal Segment</h2>
+                <p class="mb-6 text-gray-700 text-center max-w-3xl mx-auto">Discover the specific demands and nutritional needs for mineral licks across different animal categories: livestock, pets, and wildlife. Each segment has unique requirements influencing product formulation and marketing.</p>
+                <div class="flex justify-center space-x-4 md:space-x-8 mb-6" id="animalSegmentSelectors">
+                    <button class="icon-button animal-segment-selector active" data-segment="livestock" title="Livestock">🐄</button>
+                    <button class="icon-button animal-segment-selector" data-segment="pets" title="Pets">🐇</button>
+                    <button class="icon-button animal-segment-selector" data-segment="wildlife" title="Wildlife">🦌</button>
+                </div>
+                <div id="animalSegmentContentContainer" class="card"></div>
+
+                <div class="card mt-8">
+                    <h3 class="text-2xl font-semibold mb-4">Customer Reviews & Ratings Snapshot</h3>
+                    <p class="mb-3 text-sm text-gray-600">Overall ratings are generally positive, but specific feedback highlights issues with product fit for holders and delivery damage. This underscores the need for clear product dimensions and robust packaging in e-commerce.</p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="p-4 border rounded-lg bg-gray-50">
+                            <p class="font-semibold">You & Me Salt Lick (Small Animals): <span class="text-[#d97706]">4.0/5 stars</span></p>
+                            <p class="text-xs">Positive: "Very long time," "great value."</p>
+                        </div>
+                        <div class="p-4 border rounded-lg bg-gray-50">
+                            <p class="font-semibold">Himalayan Salt Lick 5.5 lbs (Pack of 2): <span class="text-[#d97706]">4.4/5 stars</span></p>
+                            <p class="text-xs">Positive: "Birds love it." Negative: "WAY TOO THIN TO FIT MY STANDERD SIZE SALT BLOCK HOLDER," "Broken salt block."</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="trends" class="content-section">
+                <h2 class="text-3xl font-semibold mb-6 text-center text-[#115e59]">Emerging Trends & Innovations</h2>
+                 <p class="mb-6 text-gray-700 text-center max-w-3xl mx-auto">The mineral lick market is evolving with new consumer preferences and technological advancements. This section highlights key trends shaping the future of animal supplementation, from natural products to smart dispensing systems.</p>
+                <div id="trendsAccordion" class="space-y-3"></div>
+            </section>
+
+            <section id="recommendations" class="content-section">
+                <h2 class="text-3xl font-semibold mb-6 text-center text-[#115e59]">Strategic Recommendations for E-commerce</h2>
+                <p class="mb-8 text-gray-700 text-center max-w-3xl mx-auto">Based on the market analysis, here are key strategies for e-commerce businesses to succeed in the mineral and salt lick category. These recommendations focus on product development, pricing, marketing, and supply chain optimization.</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="card">
+                        <h3 class="text-xl font-semibold mb-3 text-[#0d9488]">1. Product Portfolio & Diversification</h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Offer diverse forms (blocks, tubs, loose, on-a-rope).</li>
+                            <li>Include specialized formulations for different animals (livestock, pets, wildlife).</li>
+                            <li>Cater to specific needs (e.g., chelated minerals for better absorption).</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3 class="text-xl font-semibold mb-3 text-[#0d9488]">2. Pricing Strategies & Value Proposition</h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Implement tiered pricing: competitive basic options, premium for specialized products.</li>
+                            <li>Clearly articulate value-added benefits (health, productivity, convenience) to justify premium prices.</li>
+                            <li>Highlight ROI for farmers and wellness for pet owners.</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3 class="text-xl font-semibold mb-3 text-[#0d9488]">3. Marketing & Customer Engagement</h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Invest in educational content on supplementation benefits and advanced formulations.</li>
+                            <li>Emphasize "natural," "organic," "sustainable," and "domestically sourced" attributes.</li>
+                            <li>Leverage customer reviews and testimonials for social proof.</li>
+                            <li>Highlight labor-saving and convenience features.</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3 class="text-xl font-semibold mb-3 text-[#0d9488]">4. Supply Chain & Logistics Optimization</h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Prioritize suppliers with robust, diversified, or domestic raw material sources.</li>
+                            <li>Focus on durable packaging to prevent shipping damage.</li>
+                            <li>Provide clear product dimensions and compatibility information to reduce returns.</li>
+                            <li>Ensure supply chain transparency and stability.</li>
+                        </ul>
+                    </div>
+                </div>
+                 <p class="mt-8 text-center text-gray-600">Success lies in offering smart, sustainable, and precisely formulated solutions tailored to diverse animal needs.</p>
+            </section>
+        </main>
+
+        <footer class="mt-12 pt-8 border-t border-gray-300 text-center">
+            <p class="text-sm text-gray-500">&copy; <span id="currentYear"></span> Interactive Market Report. Data synthesized from Mineral Lick Market Research.</p>
+        </footer>
+    </div>
+
+<script>
+    const marketData = {
+        overview: {
+            growthChart: {
+                labels: ["2023", "2024", "2025", "2026", "2027", "2028", "2029", "2030", "2031"],
+                data: [1.8, 1.98, 2.18, 2.41, 2.66, 2.94, 3.24, 3.58, 4.0], // Approx based on 10.41% CAGR
+            },
+            drivers: [
+                { title: "Increasing Demand for Livestock Products", detail: "Global rise in demand for milk, meat, and eggs drives farmers to optimize animal health and productivity, increasing mineral lick usage." },
+                { title: "Growing Awareness of Animal Health", detail: "Increased recognition among farmers and pet owners of mineral supplementation's role in animal well-being leads to broader adoption." },
+                { title: "Rise of Organic & Natural Products", detail: "Consumer trend favoring organic/natural farming stimulates demand for organic-certified and naturally sourced salt licks (e.g., Himalayan)." },
+                { title: "Intensive Farming Practices", detail: "Modern intensive farming necessitates consistent, precise mineral provision to maintain health and optimize productivity." },
+                { title: "Technological Advancements", detail: "Innovations in product formulation (chelated minerals, slow-release) enhance nutrient absorption, making supplements more effective." }
+            ],
+            restraints: [
+                { title: "Limited Consumer Awareness/Education", detail: "Insufficient knowledge among some farmers about nutritional benefits and proper application can lead to underutilization." },
+                { title: "Economic Uncertainty & Price Sensitivity", detail: "Economic downturns may lead producers to cut supplementary product costs. High cost of premium products can limit penetration." },
+                { title: "Fluctuations in Raw Material Prices", detail: "Volatility in salt and mineral additive prices can impact production costs and retail prices." },
+                { title: "Competition from Substitute Products", detail: "Alternative feed additives necessitate ongoing innovation and market diversification." },
+                { title: "Challenges in Supplementation Efficacy", detail: "Factors like mineral stability, mixing accuracy, and interactions can affect efficacy. Precise formulation is critical." },
+                { title: "Disease Transmission Concerns (Natural Licks)", detail: "Natural licks can be hotspots for disease spread (e.g., CWD in wildlife), suggesting preference for controlled, manufactured licks." }
+            ]
+        },
+        products: {
+            types: [
+                { name: "Blocks", description: "Most prevalent solid, compressed form for free-choice feeding. Plain salt or fortified with minerals/flavors.", icon: "🧱" },
+                { name: "Lick Tubs (Molasses-based)", description: "Larger, low-moisture tubs with protein, energy, minerals, vitamins. Weather-resistant, for self-fed supplementation.", icon: "🍯" },
+                { name: "Loose Mineral/Salt", description: "Granular form for blending into feed or free-choice. Allows precise metering and uniform distribution.", icon: "🍚" },
+                { name: "On-a-Rope", description: "Many Himalayan salt licks with integrated rope for easy hanging. Reduces contamination and waste.", icon: "🧗" },
+                { name: "Small Pet Chunks/Toys", description: "Smaller, often flavored, for gerbils, rats, rabbits, etc. May include holders for cages.", icon: "🐹" }
+            ]
+        },
+        competition: {
+            brands: [
+                { 
+                    name: "Key Canadian Manufacturers/Brands", 
+                    details: [
+                        "Uniblok Canada (AB): Molasses-based blocks.",
+                        "Canadian Agri-Blend Inc. (AB): Wide variety, Redmond-based blocks.",
+                        "LivestockLix (Canada): Natural tubs for Canadian weather.",
+                        "Cana-Lix (MB): Affordable molasses tubs.",
+                        "ADM Animal Nutrition (ON, QC, AB): Premixes, supplements.",
+                        "Cargill Animal Nutrition (ON): Champion's Choice® Salt.",
+                        "Masterfeeds (ON): Comprehensive feeds.",
+                        "Trouw Nutrition Canada (ON): Feed solutions."
+                    ] 
+                },
+                {
+                    name: "Key USA Manufacturers/Brands",
+                    details: [
+                        "Redmond Minerals, Inc. (UT): USA-mined natural salt (Redmond Rock).",
+                        "Cargill Salt (Champion's Choice) (MN): Agricultural salts.",
+                        "ADM Animal Nutrition (Various): Wide range of feed products.",
+                        "Evolution Salt Co.: Himalayan salt licks.",
+                        "Compass Minerals: General salt production.",
+                        "UMAID Products (Amazon): Himalayan Salt Licks.",
+                        "Himalayan Secrets (Walmart): Compressed Himalayan Licks."
+                    ]
+                }
+            ]
+        },
+        segments: {
+            livestock: { 
+                title: "Livestock (Cattle, Horses, Sheep, Goats) 🐄", 
+                content: `
+                    <h4 class="text-xl font-semibold text-[#d97706] mb-2">Demand & Specific Needs:</h4>
+                    <p class="mb-2 text-gray-700">Largest segment, driven by producers' need for optimal health, productivity (milk, meat), and reproductive success. Supplementation is a strategic investment.</p>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li><strong>Cattle:</strong> Largest application. Formulations support health & productivity. Expected intake: 100-200g/head/day for tubs.</li>
+                        <li><strong>Horses:</strong> Significant market share. Formulations often include biotin for hooves/coat. Intake: 0.5-1.0kg/head/day.</li>
+                        <li><strong>Sheep:</strong> Products enhance flock health and wool production. Intake: 0.20-0.35kg/head/day.</li>
+                        <li><strong>General Needs:</strong> Compensate for forage deficiencies, support disease resistance, fertility, growth. Molasses tubs can improve forage efficiency.</li>
+                    </ul>
+                    <p class="mt-3 text-sm text-gray-600">Marketing should emphasize ROI: improved weight gain, breeding rates, feed efficiency.</p>`
+            },
+            pets: { 
+                title: "Pets (Rabbits, Chinchillas, Dogs, Cats, etc.) 🐇", 
+                content: `
+                    <h4 class="text-xl font-semibold text-[#d97706] mb-2">Demand & Specific Needs:</h4>
+                    <p class="mb-2 text-gray-700">Growing segment driven by 'pet humanization' and owner investment in health. Products are smaller, often with hanging features.</p>
+                    <ul class="list-disc list-inside text-gray-700 space-y-1">
+                        <li>Promotes hydration by encouraging drinking.</li>
+                        <li>Supports dental health through gnawing.</li>
+                        <li>Offers behavioral enrichment, reduces boredom/stress.</li>
+                        <li>Beneficial for gerbils, rats, chinchillas, rabbits, dogs, cats.</li>
+                    </ul>
+                    <p class="mt-3 text-sm text-gray-600">Marketing should highlight "natural," "organic," health benefits, and convenience for beloved companions.</p>`
+            },
+            wildlife: { 
+                title: "Wildlife (Deer, Elk, etc.) 🦌", 
+                content: `
+                    <h4 class="text-xl font-semibold text-[#d97706] mb-2">Demand & Considerations:</h4>
+                    <p class="mb-2 text-gray-700">Used to attract wildlife (especially deer) and supplement minerals scarce in natural forage, vital during antler growth and for does/fawns.</p>
+                    <p class="mb-2 text-gray-700">Artificial mineral sites are common for wildlife management.</p>
+                    <h5 class="font-semibold text-gray-800 mt-3">Environmental Considerations:</h5>
+                    <p class="text-gray-700">Natural licks can be disease transmission "hotspots" (e.g., CWD). This suggests a need for responsible use of artificial licks with good hygiene practices.</p>
+                    <p class="mt-3 text-sm text-gray-600">E-commerce can educate on responsible placement and use to minimize disease risks.</p>`
+            }
+        },
+        trends: [
+            { 
+                title: "🌿 Shift Towards Natural, Organic, & Sustainable Products", 
+                content: "Strong consumer demand for organic/natural farming practices. Himalayan salt (pure, unprocessed, organic) and Redmond Minerals (natural, unrefined) are examples. Sustainability (waste management, water stewardship, ethical sourcing) is increasingly important. 'Clean label' products are preferred." 
+            },
+            { 
+                title: "🔬 Technological Advancements in Formulations", 
+                content: "Focus on nutrient delivery and efficacy. <strong class='text-[#115e59]'>Chelated Minerals:</strong> Superior bioavailability and stability, efficient nutrient delivery, vital for immune/reproductive/bone health. <strong class='text-[#115e59]'>Slow-Release Boluses:</strong> Gradual mineral release for continuous supply, new formulations (micro/nanoencapsulation), some with tracking sensors, reduce waste and labor. Trend towards sophisticated, tailored formulations." 
+            },
+            { 
+                title: "💡 Smart Dispensing Systems & Convenience Features", 
+                content: "Streamlining animal care. <strong class='text-[#115e59]'>Self-Fed Lick Tubs:</strong> Consistent supplementation, reduce overconsumption, workload, and waste (e.g., SmartLic). <strong class='text-[#115e59]'>Weather Resistance:</strong> Formulations for harsh climates minimize waste (rain, snow). <strong class='text-[#115e59]'>Easy Placement:</strong> Hanging ropes, holders, specialized wildlife feeders for cleanliness and longevity. Convenience and labor-saving are strong selling points."
+            },
+            { 
+                title: "⚠️ Impact of Disease Transmission Concerns on Natural Licks", 
+                content: "Natural licks can be disease 'hotspots' (CWD, respiratory pneumonia). This creates an argument for manufactured licks, offering strategic placement, regular replacement, and designs that minimize contamination, providing a more hygienic alternative. Opportunity to market manufactured licks as safer options."
+            }
+        ]
+    };
+
+    function showTab(tabId) {
+        const sections = document.querySelectorAll('.content-section');
+        sections.forEach(section => section.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+
+        const buttons = document.querySelectorAll('.tab-button');
+        buttons.forEach(button => button.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function populateInteractiveCards(containerId, items, titleColor = 'text-[#d97706]') {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'p-4 border rounded-lg interactive-card bg-white';
+            card.innerHTML = `<h4 class="font-semibold ${titleColor} mb-1">${item.title}</h4><p class="text-sm text-gray-600 hidden">${item.detail}</p>`;
+            card.onclick = () => {
+                const detail = card.querySelector('p');
+                detail.classList.toggle('hidden');
+            };
+            container.appendChild(card);
+        });
+    }
+
+    function populateProductTypes(products) {
+        const container = document.getElementById('productTypesContainer');
+        const filtersContainer = document.getElementById('productTypeFilters');
+        container.innerHTML = '';
+        filtersContainer.innerHTML = '<button class="filter-button active py-1 px-3 rounded-md text-xs" data-filter="all">All Types</button>';
+
+        const types = ['All Types', ...new Set(products.map(p => p.name))];
+        types.slice(1).forEach(type => {
+            const button = document.createElement('button');
+            button.className = 'filter-button py-1 px-3 rounded-md text-xs';
+            button.textContent = type;
+            button.dataset.filter = type;
+            filtersContainer.appendChild(button);
+        });
+        
+        displayProductCards(products); // Initial display
+
+        filtersContainer.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                document.querySelectorAll('#productTypeFilters button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                const filter = e.target.dataset.filter;
+                const filteredProducts = filter === 'all' ? products : products.filter(p => p.name === filter);
+                displayProductCards(filteredProducts);
+            }
+        });
+    }
+
+    function displayProductCards(productsToDisplay) {
+        const container = document.getElementById('productTypesContainer');
+        container.innerHTML = '';
+         productsToDisplay.forEach(product => {
+            const card = document.createElement('div');
+            card.className = 'card flex flex-col items-center text-center';
+            card.innerHTML = `
+                <span class="text-3xl mb-2">${product.icon}</span>
+                <h4 class="text-lg font-semibold text-[#115e59] mb-1">${product.name}</h4>
+                <p class="text-xs text-gray-600">${product.description}</p>
+            `;
+            container.appendChild(card);
+        });
+    }
+    
+    function setupCompositionTabs() {
+        const tabs = document.querySelectorAll('.composition-tab-button');
+        const panels = document.querySelectorAll('.composition-content-panel');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                panels.forEach(p => p.style.display = 'none');
+                document.getElementById(tab.dataset.target).style.display = 'block';
+            });
+        });
+    }
+    
+    function setupAccordion(containerId, items) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        items.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'border rounded-lg bg-white overflow-hidden';
+            div.innerHTML = `
+                <button class="accordion-button w-full text-left p-4 font-semibold text-[#115e59] flex justify-between items-center">
+                    ${item.title}
+                    <span class="transform transition-transform duration-300 text-xl
+                    font-normal ">+</span>
+                </button>
+                <div class="accordion-content px-4 pb-0">
+                    <p class="text-sm text-gray-700 py-3">${item.content}</p>
+                </div>
+            `;
+            const button = div.querySelector('button');
+            const content = div.querySelector('.accordion-content');
+            const icon = button.querySelector('span');
+
+            button.addEventListener('click', () => {
+                const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
+                if (isOpen) {
+                    content.style.maxHeight = '0px';
+                    icon.textContent = '+';
+                    icon.classList.remove('rotate-45');
+                } else {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                    icon.textContent = '-';
+                    icon.classList.add('rotate-45');
+
+                }
+            });
+            container.appendChild(div);
+        });
+    }
+
+    function setupAnimalSegmentSelectors() {
+        const selectors = document.querySelectorAll('.animal-segment-selector');
+        const container = document.getElementById('animalSegmentContentContainer');
+        
+        function updateContent(segmentId) {
+            const segmentData = marketData.segments[segmentId];
+            container.innerHTML = `
+                <h3 class="text-2xl font-semibold mb-4 text-center">${segmentData.title}</h3>
+                ${segmentData.content}
+            `;
+        }
+
+        selectors.forEach(selector => {
+            selector.addEventListener('click', () => {
+                selectors.forEach(s => s.classList.remove('active'));
+                selector.classList.add('active');
+                updateContent(selector.dataset.segment);
+            });
+        });
+        updateContent('livestock'); // Initial display
+    }
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        
+        // Overview Tab
+        const ctx = document.getElementById('marketGrowthChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: marketData.overview.growthChart.labels,
+                datasets: [{
+                    label: 'Global Animal Salt Licks Market Value (USD Billion)',
+                    data: marketData.overview.growthChart.data,
+                    borderColor: '#d97706', // Terracotta
+                    backgroundColor: 'rgba(217, 119, 6, 0.1)', // Light Terracotta
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Market Value (USD Billion)'} },
+                    x: { title: { display: true, text: 'Year'} }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y + ' Billion USD';
+                            }
+                        }
+                    },
+                    legend: { labels: { font: { size: 10 } } }
+                },
+                animation: { duration: 1000 }
+            }
+        });
+
+        populateInteractiveCards('marketDrivers', marketData.overview.drivers);
+        populateInteractiveCards('marketRestraints', marketData.overview.restraints);
+
+        // Products Tab
+        populateProductTypes(marketData.products.types);
+        setupCompositionTabs();
+
+        // Competition Tab
+        setupAccordion('leadingBrandsAccordion', marketData.competition.brands.map(b => ({title: b.name, content: b.details.join('<br>')})));
+        
+        // Animal Segments Tab
+        setupAnimalSegmentSelectors();
+
+        // Trends Tab
+        setupAccordion('trendsAccordion', marketData.trends);
+        
+        // Set initial active tab content
+        showTab('overview'); 
+        // Re-trigger to ensure the button style is also correctly set (active class) for the first tab
+        document.querySelector('.tab-button[onclick="showTab(\'overview\')"]').classList.add('active');
+
+    });
+</script>
+</body>
+</html>
